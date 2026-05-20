@@ -3,7 +3,7 @@
   Capstone Project ( Undertook from Senai's Systems Development Course)
 
   # EED
-  This is a code bundle for EED frontal Dashboard. The original project is available at https://www.figma.com/design/vU2CBrajhr3pMq5XGH1joT/EED-frontal-Dashboard.
+ The screen designs were made with Figma
 
   ## Running the code
 
