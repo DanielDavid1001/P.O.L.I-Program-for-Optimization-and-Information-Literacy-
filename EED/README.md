@@ -1,6 +1,8 @@
 
-  # EED
+  P.O.L.I-Program-for-Optimization-and-Information-Literacy-
+  Capstone Project ( Undertook from Senai's Systems Development Course)
 
+  # EED
   This is a code bundle for EED frontal Dashboard. The original project is available at https://www.figma.com/design/vU2CBrajhr3pMq5XGH1joT/EED-frontal-Dashboard.
 
   ## Running the code
