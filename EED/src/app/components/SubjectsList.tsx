@@ -72,4 +72,11 @@ export function SubjectsList({ subjects, onRemove, darkMode }: SubjectsListProps
               <div className="flex items-center gap-2 text-sm">
                 <Edit size={16} />
                 <span className={darkMode ? 'text-gray-300' : 'text-gray-700'}>Professor: {subject.teacherId || 'Não definido'}</span>
-             
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}

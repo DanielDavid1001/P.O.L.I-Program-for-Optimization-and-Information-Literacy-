@@ -192,4 +192,10 @@ export function StudentsList({ students, onRemove, onEdit, darkMode }: StudentsL
       {viewingStudent && (
         <StudentDetails
           student={viewingStudent}
-          onClose={() => se
+          onClose={() => setViewingStudent(null)}
+          darkMode={darkMode}
+        />
+      )}
+    </div>
+  );
+}

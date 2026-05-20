@@ -266,4 +266,11 @@ export function MaterialsList({ materials, onRemove, darkMode }: MaterialsListPr
       {viewingMaterial && (
         <MaterialDetails
           material={viewingMaterial}
-          onClose={() => setVi
+          onClose={() => setViewingMaterial(null)}
+          onDownload={handleDownload}
+          darkMode={darkMode}
+        />
+      )}
+    </div>
+  );
+}
