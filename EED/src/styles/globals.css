@@ -1,0 +1,49 @@
+/* Hide native date picker icon on WebKit browsers so our custom icon isn't duplicated */
+input[type="date"] {
+	-webkit-appearance: textfield;
+	appearance: textfield;
+}
+
+/* Remove the calendar picker indicator in WebKit (Chrome, Edge, Safari) */
+input[type="date"]::-webkit-calendar-picker-indicator {
+	display: none;
+	-webkit-appearance: none;
+}
+
+/* Remove inner clear and spin buttons */
+input[type="date"]::-webkit-clear-button,
+input[type="date"]::-webkit-inner-spin-button {
+	display: none;
+}
+
+/* For Firefox, hide the native appearance (may vary by version) */
+input[type="date"] {
+	-moz-appearance: textfield;
+}
+
+/* Custom scrollbar for WebKit and Firefox */
+.custom-scrollbar {
+	scrollbar-width: thin;
+	scrollbar-color: rgba(249,115,22,0.8) rgba(75,85,99,0.2);
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+	width: 10px;
+	height: 10px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+	background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+	background-color: rgba(249,115,22,0.9);
+	border-radius: 999px;
+	border: 2px solid rgba(0,0,0,0);
+	background-clip: padding-box;
+}
+.custom-scrollbar.custom-scrollbar-dark::-webkit-scrollbar-thumb {
+	background-color: rgba(249,115,22,0.85);
+}
+
+/* Smaller scrollbar when space is limited */
+.custom-scrollbar.thin::-webkit-scrollbar { width: 8px; }
+.custom-scrollbar.thin::-webkit-scrollbar-thumb { border-radius: 6px; }
