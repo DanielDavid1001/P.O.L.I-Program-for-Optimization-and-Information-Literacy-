@@ -4,10 +4,6 @@
 /EED/.vite/
 /EED/dist/
 /EED/.cache/
-/EED/backend/public/app/assets/*.jpg
-/EED/backend/public/app/assets/*.png
-/EED/backend/public/app/assets/*.webp
-/EED/backend/public/app/assets/*.gif
 /.idea/
 /.vscode/
 /.DS_Store
