@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'poli' => [
+        'registration_token' => env('POLI_REGISTRATION_TOKEN'),
+    ],
+
 ];

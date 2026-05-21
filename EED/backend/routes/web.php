@@ -3,8 +3,9 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\StudentController;
 
-// Public student creation endpoint - no CSRF middleware
+// Protected student creation endpoint for authenticated users.
 Route::post('/students', [StudentController::class, 'store'])
+    ->middleware('auth:sanctum')
     ->withoutMiddleware(\Illuminate\Foundation\Http\Middleware\PreventRequestForgery::class);
 
 // Serve the built frontend directly from Laravel so `php artisan serve` is enough.

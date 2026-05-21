@@ -1,4 +1,29 @@
 const ENV_API_BASE = import.meta.env.VITE_API_URL?.trim();
+const AUTH_TOKEN_KEY = 'eed-auth-token';
+
+function getAuthToken() {
+  try {
+    return localStorage.getItem(AUTH_TOKEN_KEY);
+  } catch (error) {
+    return null;
+  }
+}
+
+export function setAuthToken(token: string) {
+  try {
+    localStorage.setItem(AUTH_TOKEN_KEY, token);
+  } catch (error) {
+    // ignore storage failures
+  }
+}
+
+export function clearAuthToken() {
+  try {
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+  } catch (error) {
+    // ignore storage failures
+  }
+}
 
 function getApiBase() {
   if (typeof window === 'undefined') {
@@ -31,6 +56,24 @@ function api(path: string) {
   return `${base}/api${path}`;
 }
 
+function request(path: string, options: RequestInit = {}) {
+  const headers = new Headers(options.headers ?? {});
+  const token = getAuthToken();
+
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+
+  if (!headers.has('Accept')) {
+    headers.set('Accept', 'application/json');
+  }
+
+  return fetch(api(path), {
+    ...options,
+    headers,
+  });
+}
+
 async function handleResponse(res: Response) {
   if (!res.ok) {
     const payload = await res.json().catch(async () => {
@@ -46,17 +89,17 @@ async function handleResponse(res: Response) {
 }
 
 export async function getStudents() {
-  const res = await fetch(api('/students'));
+  const res = await request('/students');
   return handleResponse(res);
 }
 
 export async function getStudent(id: number | string) {
-  const res = await fetch(api(`/students/${id}`));
+  const res = await request(`/students/${id}`);
   return handleResponse(res);
 }
 
 export async function createStudent(payload: any) {
-  const res = await fetch(api('/students'), {
+  const res = await request('/students', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -65,7 +108,7 @@ export async function createStudent(payload: any) {
 }
 
 export async function updateStudent(id: number | string, payload: any) {
-  const res = await fetch(api(`/students/${id}`), {
+  const res = await request(`/students/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -74,7 +117,7 @@ export async function updateStudent(id: number | string, payload: any) {
 }
 
 export async function deleteStudent(id: number | string) {
-  const res = await fetch(api(`/students/${id}`), {
+  const res = await request(`/students/${id}`, {
     method: 'DELETE',
   });
   if (res.status === 204) return {};
@@ -83,17 +126,17 @@ export async function deleteStudent(id: number | string) {
 
 // Teachers
 export async function getTeachers() {
-  const res = await fetch(api('/teachers'));
+  const res = await request('/teachers');
   return handleResponse(res);
 }
 
 export async function getTeacher(id: number | string) {
-  const res = await fetch(api(`/teachers/${id}`));
+  const res = await request(`/teachers/${id}`);
   return handleResponse(res);
 }
 
 export async function createTeacher(payload: any) {
-  const res = await fetch(api('/teachers'), {
+  const res = await request('/teachers', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -102,7 +145,7 @@ export async function createTeacher(payload: any) {
 }
 
 export async function updateTeacher(id: number | string, payload: any) {
-  const res = await fetch(api(`/teachers/${id}`), {
+  const res = await request(`/teachers/${id}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -111,7 +154,7 @@ export async function updateTeacher(id: number | string, payload: any) {
 }
 
 export async function deleteTeacher(id: number | string) {
-  const res = await fetch(api(`/teachers/${id}`), {
+  const res = await request(`/teachers/${id}`, {
     method: 'DELETE',
   });
   if (res.status === 204) return {};
@@ -120,12 +163,12 @@ export async function deleteTeacher(id: number | string) {
 
 // Subjects
 export async function getSubjects() {
-  const res = await fetch(api('/subjects'));
+  const res = await request('/subjects');
   return handleResponse(res);
 }
 
 export async function createSubject(payload: any) {
-  const res = await fetch(api('/subjects'), {
+  const res = await request('/subjects', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -134,7 +177,7 @@ export async function createSubject(payload: any) {
 }
 
 export async function deleteSubject(id: number | string) {
-  const res = await fetch(api(`/subjects/${id}`), {
+  const res = await request(`/subjects/${id}`, {
     method: 'DELETE',
   });
   if (res.status === 204) return {};
@@ -143,19 +186,19 @@ export async function deleteSubject(id: number | string) {
 
 // Materials
 export async function getMaterials() {
-  const res = await fetch(api('/materials'));
+  const res = await request('/materials');
   return handleResponse(res);
 }
 
 export async function createMaterial(payload: any) {
   let res: Response;
   if (payload instanceof FormData) {
-    res = await fetch(api('/materials'), {
+    res = await request('/materials', {
       method: 'POST',
       body: payload,
     });
   } else {
-    res = await fetch(api('/materials'), {
+    res = await request('/materials', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -165,7 +208,7 @@ export async function createMaterial(payload: any) {
 }
 
 export async function deleteMaterial(id: number | string) {
-  const res = await fetch(api(`/materials/${id}`), {
+  const res = await request(`/materials/${id}`, {
     method: 'DELETE',
   });
   if (res.status === 204) return {};
@@ -174,12 +217,12 @@ export async function deleteMaterial(id: number | string) {
 
 // Classrooms
 export async function getClassrooms() {
-  const res = await fetch(api('/classrooms'));
+  const res = await request('/classrooms');
   return handleResponse(res);
 }
 
 export async function createClassroom(payload: any) {
-  const res = await fetch(api('/classrooms'), {
+  const res = await request('/classrooms', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
@@ -188,7 +231,7 @@ export async function createClassroom(payload: any) {
 }
 
 export async function login(email: string, password: string) {
-  const res = await fetch(api('/login'), {
+  const res = await request('/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password }),
@@ -196,8 +239,22 @@ export async function login(email: string, password: string) {
   return handleResponse(res);
 }
 
+export async function register(payload: { name: string; email: string; password: string; password_confirmation: string; role: 'admin' | 'teacher' | 'student'; registration_token: string; phone?: string; }) {
+  const res = await request('/register', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}
+
+export async function getCurrentUser() {
+  const res = await request('/user');
+  return handleResponse(res);
+}
+
 export async function logout() {
-  const res = await fetch(api('/logout'), { method: 'POST' });
+  const res = await request('/logout', { method: 'POST' });
   return handleResponse(res);
 }
 
@@ -207,5 +264,6 @@ export default {
   getSubjects, createSubject,
   getMaterials, createMaterial, deleteMaterial,
   getClassrooms, createClassroom,
-  login, logout,
+  login, register, logout, getCurrentUser,
+  setAuthToken, clearAuthToken,
 };

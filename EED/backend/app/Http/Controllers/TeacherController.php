@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\Teacher;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class TeacherController extends Controller
 {
@@ -48,12 +51,36 @@ class TeacherController extends Controller
             $teacher->load('subjects');
         }
 
+        try {
+            if ($request->user() && ($request->user()->role ?? '') === 'admin') {
+                $user = User::where('email', $teacher->email)->first();
+                if (! $user) {
+                    $password = Str::random(12);
+                    $user = User::create([
+                        'name' => $teacher->name,
+                        'email' => $teacher->email,
+                        'password' => Hash::make($password),
+                        'role' => 'teacher',
+                    ]);
+                } else {
+                    $user->name = $teacher->name;
+                    $user->save();
+                }
+
+                $teacher->user_id = $user->id;
+                $teacher->save();
+            }
+        } catch (\Exception $e) {
+            // ignore sync failures
+        }
+
         return response()->json($teacher, 201);
     }
 
     public function update(Request $request, $id)
     {
         $teacher = Teacher::findOrFail($id);
+        $oldEmail = $teacher->email;
         $data = $request->validate([
             'name' => 'sometimes|required|string',
             'email' => "sometimes|required|email|unique:teachers,email,$id",
@@ -64,6 +91,34 @@ class TeacherController extends Controller
         ]);
 
         $teacher->update($data);
+
+
+        try {
+            if ($request->user() && ($request->user()->role ?? '') === 'admin') {
+                $user = User::where('email', $oldEmail)->first();
+                if ($user) {
+                    $user->name = $teacher->name;
+                    if (!empty($teacher->email)) {
+                        $user->email = $teacher->email;
+                    }
+                    $user->save();
+                } else {
+                    if (!empty($teacher->email)) {
+                        $password = Str::random(12);
+                        $user = User::create([
+                            'name' => $teacher->name,
+                            'email' => $teacher->email,
+                            'password' => Hash::make($password),
+                            'role' => 'teacher',
+                        ]);
+                        $teacher->user_id = $user->id;
+                        $teacher->save();
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // ignore
+        }
 
         if (array_key_exists('subjects', $data)) {
             $subjectIds = [];

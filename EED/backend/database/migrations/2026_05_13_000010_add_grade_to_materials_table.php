@@ -8,6 +8,10 @@ class AddGradeToMaterialsTable extends Migration
 {
     public function up()
     {
+        if (! Schema::hasTable('materials') || Schema::hasColumn('materials', 'grade')) {
+            return;
+        }
+
         Schema::table('materials', function (Blueprint $table) {
             $table->string('grade')->nullable()->after('subject_id');
         });
@@ -15,6 +19,10 @@ class AddGradeToMaterialsTable extends Migration
 
     public function down()
     {
+        if (! Schema::hasTable('materials') || ! Schema::hasColumn('materials', 'grade')) {
+            return;
+        }
+
         Schema::table('materials', function (Blueprint $table) {
             $table->dropColumn('grade');
         });

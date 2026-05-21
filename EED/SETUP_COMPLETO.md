@@ -11,7 +11,7 @@
 
 ---
 
-## 🚀 Início Rápido
+## Início
 
 ### Pré-requisitos
 
@@ -23,7 +23,7 @@
 ### 1. Setup do Frontend
 
 ```bash
-cd "C:\xampp\htdocs\P.O.L.I\EED frontal Dashboard"
+cd "C:\xampp\htdocs\P.O.L.I\EED"
 
 # Instalar dependências
 npm install
@@ -89,7 +89,7 @@ O backend estará disponível em: **http://localhost:8000**
 
 ---
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 EED frontal Dashboard/
@@ -127,11 +127,12 @@ EED frontal Dashboard/
 
 ---
 
-## 🔗 Integração Frontend-Backend
+## Integração Frontend-Backend
 
 ### Cliente API (`src/lib/api.ts`)
 
-O frontend comunica com o backend através do cliente API em `src/lib/api.ts`. Exemplo:
+O frontend comunica com o backend através do cliente API em `src/lib/api.ts`. 
+Exemplo:
 
 ```typescript
 import * as api from "../lib/api";
@@ -143,7 +144,7 @@ const students = await api.getStudents();
 const newStudent = await api.createStudent({
   name: "João Silva",
   email: "joao@escola.com",
-  phone: "11999999999",
+  phone: "(21)98024-3122",
   birth_date: "2015-05-10",
   classroom_id: 1,
 });
@@ -171,7 +172,7 @@ VITE_API_URL=https://api.seudominio.com
 
 ---
 
-## 📊 Modelos de Dados
+## Modelos de Dados
 
 ### Student (Aluno)
 ```json
@@ -179,7 +180,7 @@ VITE_API_URL=https://api.seudominio.com
   "id": 1,
   "name": "João Silva",
   "email": "joao@escola.com",
-  "phone": "11999999999",
+  "phone": "(21)98324-1122",
   "birth_date": "2015-05-10",
   "classroom_id": 1,
   "created_at": "2026-05-09T10:00:00Z",
@@ -193,7 +194,7 @@ VITE_API_URL=https://api.seudominio.com
   "id": 1,
   "name": "Carlos Mendes",
   "email": "carlos@escola.com",
-  "phone": "11988888888",
+  "phone": "(21)9198244251",
   "created_at": "2026-05-09T10:00:00Z",
   "updated_at": "2026-05-09T10:00:00Z"
 }
@@ -226,21 +227,9 @@ VITE_API_URL=https://api.seudominio.com
 }
 ```
 
-### Classroom (Turma)
-```json
-{
-  "id": 1,
-  "name": "5º Ano A",
-  "year": "2026",
-  "shift": "Matutino",
-  "created_at": "2026-05-09T10:00:00Z",
-  "updated_at": "2026-05-09T10:00:00Z"
-}
-```
-
 ---
 
-## 🔐 Autenticação
+## Autenticação
 
 ### Login
 
@@ -269,9 +258,38 @@ const res = await fetch("http://localhost:8000/api/students", {
 });
 ```
 
+### Cadastro e primeiro acesso
+
+O sistema funciona assim:
+
+- **Aluno:** pode se cadastrar normalmente, sem token.
+- **Professor/Administrador:** precisam informar o token de registro.
+- **Primeiro administrador:** deve ser criado pelo terminal.
+
+Fluxo prático:
+
+1. Gere o token de registro no terminal:
+
+```bash
+cd "C:\xampp\htdocs\P.O.L.I\EED\backend"
+php artisan poli:generate-registration-token
+```
+
+2. O token é mostrado no terminal e salvo em `storage/app/poli/registration-token.txt`.
+3. Use esse token na tela de cadastro quando for criar um administrador ou professor.
+4. Para o primeiro acesso administrativo, crie o primeiro admin pelo terminal:
+
+```bash
+php artisan poli:create-first-admin
+```
+
+5. Depois disso, o administrador pode entrar normalmente com login e senha.
+
+Observação: hoje o token é recebido manualmente pelo terminal e pela tela de cadastro; futuramente ele pode ser enviado por e-mail.
+
 ---
 
-## 🧪 Testes
+## Testes
 
 ### Testar Backend com Postman/Insomnia
 
@@ -282,7 +300,7 @@ const res = await fetch("http://localhost:8000/api/students", {
 ### Testar Frontend
 
 ```bash
-cd "C:\xampp\htdocs\P.O.L.I\EED frontal Dashboard"
+cd "C:\xampp\htdocs\P.O.L.I\EED"
 npm run dev
 
 # Acesse http://localhost:5173
@@ -291,7 +309,7 @@ npm run dev
 
 ---
 
-## 📝 Endpoints Principais
+## Endpoints Principais
 
 Ver documentação completa em [backend/API_DOCUMENTATION.md](./backend/API_DOCUMENTATION.md)
 
@@ -312,7 +330,7 @@ Ver documentação completa em [backend/API_DOCUMENTATION.md](./backend/API_DOCU
 
 ---
 
-## 🚀 Deploy
+## Deploy
 
 ### Backend (Laravel)
 
@@ -336,6 +354,9 @@ heroku run php artisan migrate
 - Clone o repo e rode `php artisan migrate`
 - Configure domínio e SSL
 
+** Utilizando O Script -npm run deploy-**
+- npm run deploy (Configura as alterações feitas no frontend para o backend)
+
 ### Frontend (React)
 
 **Opção 1: Vercel**
@@ -358,7 +379,7 @@ npm run build
 
 ---
 
-## 🛠️ Troubleshooting
+## Troubleshooting
 
 ### "CORS error: Access denied"
 - Verifique se `SANCTUM_STATEFUL_DOMAINS` está configurado no `.env` do backend
@@ -378,7 +399,7 @@ npm run build
 
 ---
 
-## 📚 Recursos Adicionais
+## Recursos Adicionais
 
 - [Laravel Sanctum Documentation](https://laravel.com/docs/11.x/sanctum)
 - [React Documentation](https://react.dev)
@@ -388,11 +409,11 @@ npm run build
 
 ---
 
-## 📄 Licença
+## Licença
 
 Este projeto é fornecido como exemplo educacional. Adapte conforme necessário para seus requisitos.
 
 ---
 
-**Desenvolvido com ❤️ para educação**
+**Desenvolvido com (carinho 😊) para educação**
 

@@ -11,6 +11,7 @@ class Teacher extends Model
 
     protected $fillable = [
         'name',
+        'user_id',
         'email',
         'phone',
         'is_intern',
@@ -28,5 +29,10 @@ class Teacher extends Model
     public function materials()
     {
         return $this->hasMany(Material::class, 'uploaded_by');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(\App\Models\User::class, 'user_id');
     }
 }
