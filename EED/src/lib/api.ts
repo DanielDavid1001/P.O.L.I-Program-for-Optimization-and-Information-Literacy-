@@ -29,25 +29,19 @@ function getApiBase() {
   if (typeof window === 'undefined') {
     return ENV_API_BASE?.replace(/\/$/, '') ?? '';
   }
-
   const { protocol, hostname, port } = window.location;
 
-  if ((hostname === 'localhost' || hostname === '127.0.0.1') && port === '8000') {
-    return '';
-  }
-
-  if (port === '5173' || port === '4173') {
-    return `${protocol}//127.0.0.1:8000`;
-  }
-
+  // Priority: explicit env var, otherwise assume local backend at port 8000 in dev
   if (ENV_API_BASE) {
     return ENV_API_BASE.replace(/\/$/, '');
   }
 
+  // If running on a dev server (localhost), default to PHP dev server at port 8000
   if (hostname === 'localhost' || hostname === '127.0.0.1') {
-    return '';
+    return `${protocol}//127.0.0.1:8000`;
   }
 
+  // Fallback to empty string (same-origin) if nothing else matches
   return '';
 }
 
@@ -74,6 +68,19 @@ function request(path: string, options: RequestInit = {}) {
   });
 }
 
+function requestPublic(path: string, options: RequestInit = {}) {
+  const headers = new Headers(options.headers ?? {});
+
+  if (!headers.has('Accept')) {
+    headers.set('Accept', 'application/json');
+  }
+
+  return fetch(api(path), {
+    ...options,
+    headers,
+  });
+}
+
 async function handleResponse(res: Response) {
   if (!res.ok) {
     const payload = await res.json().catch(async () => {
@@ -83,6 +90,12 @@ async function handleResponse(res: Response) {
         status: res.status,
       };
     });
+
+    if (res.status === 403 && typeof window !== 'undefined') {
+      // Previously dispatched a global permission-denied event here.
+      // Changed to let callers handle 403 responses locally to avoid a global popup.
+    }
+
     throw payload;
   }
   return res.json().catch(() => ({}));
@@ -167,6 +180,11 @@ export async function getSubjects() {
   return handleResponse(res);
 }
 
+export async function getPublicSubjects() {
+  const res = await requestPublic('/subjects-public');
+  return handleResponse(res);
+}
+
 export async function createSubject(payload: any) {
   const res = await request('/subjects', {
     method: 'POST',
@@ -185,8 +203,8 @@ export async function deleteSubject(id: number | string) {
 }
 
 // Materials
-export async function getMaterials() {
-  const res = await request('/materials');
+export async function getMaterials(options?: { public?: boolean }) {
+  const res = options?.public ? await requestPublic('/materials') : await request('/materials');
   return handleResponse(res);
 }
 
@@ -239,7 +257,7 @@ export async function login(email: string, password: string) {
   return handleResponse(res);
 }
 
-export async function register(payload: { name: string; email: string; password: string; password_confirmation: string; role: 'admin' | 'teacher' | 'student'; registration_token: string; phone?: string; }) {
+export async function register(payload: { name: string; email: string; password: string; password_confirmation: string; role: 'admin' | 'teacher' | 'student'; registration_token: string; phone?: string; birth_date?: string; age?: number | string | null; grade?: string | null; subjects?: string[]; }) {
   const res = await request('/register', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -253,17 +271,54 @@ export async function getCurrentUser() {
   return handleResponse(res);
 }
 
+export async function updateCurrentUser(payload: {
+  name: string;
+  email: string;
+  phone?: string;
+  birth_date?: string | null;
+  grade?: string | null;
+  subjects?: string[];
+  is_pcd?: boolean;
+  pcd_notes?: string | null;
+}) {
+  const res = await request('/user', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(res);
+}
+
 export async function logout() {
   const res = await request('/logout', { method: 'POST' });
+  return handleResponse(res);
+}
+
+export async function forgotPassword(email: string) {
+  const res = await requestPublic('/forgot-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email }),
+  });
+  return handleResponse(res);
+}
+
+export async function resetPassword(payload: { email: string; token: string; password: string; password_confirmation: string; }) {
+  const res = await requestPublic('/reset-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
   return handleResponse(res);
 }
 
 export default {
   getStudents, getStudent, createStudent, updateStudent, deleteStudent,
   getTeachers, getTeacher, createTeacher, updateTeacher, deleteTeacher,
-  getSubjects, createSubject,
+  getSubjects, getPublicSubjects, createSubject,
   getMaterials, createMaterial, deleteMaterial,
   getClassrooms, createClassroom,
   login, register, logout, getCurrentUser,
+  forgotPassword, resetPassword,
   setAuthToken, clearAuthToken,
 };

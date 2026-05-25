@@ -1,419 +1,182 @@
 # P.O.L.I - Sistema de Apoio Escolar
 
-**P.O.L.I (Programa de Otimização e Leitura de Informações)** é um sistema web completo de apoio pedagógico para gerenciar alunos, professores, disciplinas e materiais didáticos em instituições de ensino.
+Este documento descreve como o projeto funciona e como preparar o ambiente local. O sistema é dividido em frontend React e backend Laravel, com autenticação via token e áreas protegidas por perfil de usuário.
 
-## Visão Geral
+## O que o sistema faz
 
-- **Frontend:** React + Vite + TypeScript + TailwindCSS + shadcn/ui
-- **Backend:** PHP + Laravel 11 + Sanctum (autenticação)
-- **Banco de Dados:** MySQL/PostgreSQL
-- **Autenticação:** Token-based com Laravel Sanctum
+O P.O.L.I organiza dados escolares em quatro frentes principais:
 
----
+- cadastro e autenticação de usuários;
+- gestão de alunos, professores, disciplinas e turmas;
+- publicação e consumo de materiais didáticos;
+- atualização do próprio perfil autenticado.
 
-## Início
+O frontend usa a API em `EED/backend` para montar a experiência da aplicação. Após o login, o token é salvo no navegador e reutilizado automaticamente nas chamadas protegidas.
 
-### Pré-requisitos
+## Funcionalidades
 
-- **Node.js** 18+ (para frontend)
-- **PHP** 8.2+ (para backend)
-- **Composer** (gerenciador de pacotes PHP)
-- **MySQL** 8.0+ ou **PostgreSQL** 13+ (banco de dados)
+### Cadastro de conta
 
-### 1. Setup do Frontend
+- `student` pode se cadastrar diretamente.
+- `teacher` e `admin` passam por validação com token de registro.
+- a senha precisa ser confirmada e não pode conter sequências previsíveis como `1234` ou `abcd`.
+
+### Login e sessão
+
+- o login gera um token pessoal do Laravel Sanctum.
+- o frontend armazena esse token no `localStorage`.
+- o endpoint `/api/user` é usado para carregar o perfil real do usuário depois da autenticação.
+- o logout invalida o token atual.
+
+### Recuperação de senha
+
+- há fluxo público para `forgot-password` e `reset-password`.
+- o processo foi desenhado para não depender de enumeração de usuários.
+
+### Perfis e permissões
+
+- alunos podem editar o próprio perfil autenticado.
+- professores têm vínculo com disciplinas.
+- administradores têm acesso aos cadastros mais sensíveis.
+
+### Módulos disponíveis
+
+- alunos
+- professores
+- disciplinas
+- turmas
+- materiais
+
+## Como a autenticação funciona
+
+O fluxo real da aplicação é o seguinte:
+
+1. O usuário envia `email` e `password` para `/api/login`.
+2. A API responde com `user` e `token`.
+3. O frontend salva o token e passa a enviá-lo como `Bearer` nas próximas requisições.
+4. O frontend consulta `/api/user` para obter o perfil completo e os dados específicos de aluno ou professor.
+5. Em `student`, `teacher` e `admin`, a área disponível muda conforme a role.
+
+### Cadastro com token de registro
+
+Para `teacher` e `admin`, o backend usa um token temporário de cadastro:
+
+- se o token estiver ausente ou incorreto, a API gera um novo token;
+- esse token fica em cache por 15 minutos;
+- o valor é impresso no terminal do servidor;
+- a mesma requisição deve ser reenviada com o token correto em `registration_token`.
+
+Esse mecanismo evita a criação indevida de contas administrativas.
+
+## Estrutura do projeto
+
+```text
+EED/
+├── src/                # Frontend React + Vite
+├── backend/            # API Laravel
+├── guidelines/         # Diretrizes do projeto
+├── README.md           # Visão geral do projeto
+└── SETUP_COMPLETO.md   # Guia de configuração
+```
+
+## Pré-requisitos
+
+- Node.js 18+
+- PHP 8.2+
+- Composer
+- MySQL 8+ ou PostgreSQL 13+
+
+## Setup do frontend
 
 ```bash
 cd "C:\xampp\htdocs\P.O.L.I\EED"
-
-# Instalar dependências
 npm install
-
-# Ou se preferir usar npm.cmd (recomendado no Windows):
-npm.cmd install
-
-# Iniciar servidor de desenvolvimento
 npm run dev
-# Ou
-npm.cmd run dev
 ```
 
-O frontend estará disponível em: **http://localhost:5173**
+Se preferir no Windows, `npm.cmd install` e `npm.cmd run dev` também funcionam.
 
-### 2. Setup do Backend
+O frontend sobe em `http://localhost:5173`.
+
+## Setup do backend
+
+Se o backend ainda não estiver configurado:
 
 ```bash
-# 1. Criar novo projeto Laravel (se ainda não tiver feito)
-composer create-project laravel/laravel backend
-
-# 2. Copiar os stubs da pasta backend/ para o projeto
-# Mescle os arquivos:
-# - app/Models/* (Student.php, Teacher.php, etc.)
-# - app/Http/Controllers/* (StudentController.php, etc.)
-# - database/migrations/* (create_students_table.php, etc.)
-# - routes/api.php
-
-# 3. Entrar na pasta backend
-cd backend
-
-# 4. Instalar Sanctum para autenticação
-composer require laravel/sanctum
-
-# 5. Publicar configurações do Sanctum
-php artisan vendor:publish --provider="Laravel\Sanctum\SanctumServiceProvider"
-
-# 6. Configurar .env
-# Copie .env.example para .env e configure:
+cd "C:\xampp\htdocs\P.O.L.I\EED\backend"
 cp .env.example .env
 php artisan key:generate
-
-# Configure as credenciais do banco de dados:
-# DB_CONNECTION=mysql
-# DB_HOST=127.0.0.1
-# DB_PORT=3306
-# DB_DATABASE=poli_db
-# DB_USERNAME=root
-# DB_PASSWORD=
-
-# Configure CORS e Sanctum:
-# SANCTUM_STATEFUL_DOMAINS=localhost:5173,127.0.0.1:5173
-# APP_URL=http://localhost:8000
-
-# 7. Rodar migrations
 php artisan migrate
-
-# 8. Iniciar servidor de desenvolvimento
 php artisan serve
 ```
 
-O backend estará disponível em: **http://localhost:8000**
+Se o projeto já estiver clonado com as dependências instaladas, normalmente basta ajustar `.env`, validar o banco e subir o servidor.
 
----
+O backend fica em `http://localhost:8000`.
 
-## Estrutura do Projeto
+## Variáveis importantes
 
-```
-EED frontal Dashboard/
-├── frontend/                    # React + Vite
-│   ├── src/
-│   │   ├── app/
-│   │   │   ├── components/      # Componentes React (StudentForm, TeacherForm, etc.)
-│   │   │   └── App.tsx          # App principal
-│   │   ├── lib/
-│   │   │   └── api.ts           # Cliente HTTP para chamar API
-│   │   └── styles/              # Arquivos CSS/TailwindCSS
-│   ├── package.json
-│   ├── vite.config.ts
-│   └── .env.local               # Configuração de URL da API
-│
-├── backend/                     # Laravel
-│   ├── app/
-│   │   ├── Models/              # Models (Student, Teacher, etc.)
-│   │   └── Http/
-│   │       └── Controllers/     # Controllers (StudentController, etc.)
-│   ├── database/
-│   │   ├── migrations/          # Migrations para banco de dados
-│   │   └── seeders/             # (opcional) dados iniciais
-│   ├── routes/
-│   │   └── api.php              # Rotas da API
-│   ├── config/
-│   │   ├── cors.php             # Configuração CORS
-│   │   └── sanctum.php          # Configuração de autenticação
-│   ├── .env                     # Variáveis de ambiente
-│   ├── README.md                # Instruções do backend
-│   └── API_DOCUMENTATION.md     # Documentação de endpoints
-│
-└── README.md (este arquivo)
-```
-
----
-
-## Integração Frontend-Backend
-
-### Cliente API (`src/lib/api.ts`)
-
-O frontend comunica com o backend através do cliente API em `src/lib/api.ts`. 
-Exemplo:
-
-```typescript
-import * as api from "../lib/api";
-
-// Buscar lista de alunos
-const students = await api.getStudents();
-
-// Criar novo aluno
-const newStudent = await api.createStudent({
-  name: "João Silva",
-  email: "joao@escola.com",
-  phone: "(21)98024-3122",
-  birth_date: "2015-05-10",
-  classroom_id: 1,
-});
-
-// Atualizar aluno
-await api.updateStudent(studentId, { name: "João Atualizado" });
-
-// Deletar aluno
-await api.deleteStudent(studentId);
-```
-
-### Configuração da URL da API
-
-Crie um arquivo `.env.local` na raiz do projeto frontend:
+### Frontend
 
 ```env
 VITE_API_URL=http://localhost:8000
 ```
 
-Em produção, altere para a URL do seu servidor:
+### Backend
 
 ```env
-VITE_API_URL=https://api.seudominio.com
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=poli_db
+DB_USERNAME=root
+DB_PASSWORD=
+
+SANCTUM_STATEFUL_DOMAINS=localhost:5173,127.0.0.1:5173
+APP_URL=http://localhost:8000
 ```
 
----
+## Principais endpoints
 
-## Modelos de Dados
-
-### Student (Aluno)
-```json
-{
-  "id": 1,
-  "name": "João Silva",
-  "email": "joao@escola.com",
-  "phone": "(21)98324-1122",
-  "birth_date": "2015-05-10",
-  "classroom_id": 1,
-  "created_at": "2026-05-09T10:00:00Z",
-  "updated_at": "2026-05-09T10:00:00Z"
-}
-```
-
-### Teacher (Professor)
-```json
-{
-  "id": 1,
-  "name": "Carlos Mendes",
-  "email": "carlos@escola.com",
-  "phone": "(21)9198244251",
-  "created_at": "2026-05-09T10:00:00Z",
-  "updated_at": "2026-05-09T10:00:00Z"
-}
-```
-
-### Subject (Disciplina)
-```json
-{
-  "id": 1,
-  "name": "Matemática",
-  "code": "MAT001",
-  "teacher_id": 1,
-  "created_at": "2026-05-09T10:00:00Z",
-  "updated_at": "2026-05-09T10:00:00Z"
-}
-```
-
-### Material (Arquivo/Recurso)
-```json
-{
-  "id": 1,
-  "title": "Introdução à Álgebra",
-  "description": "Material sobre álgebra básica",
-  "type": "pdf",
-  "subject_id": 1,
-  "file_url": "https://...",
-  "uploaded_by": 1,
-  "created_at": "2026-05-09T10:00:00Z",
-  "updated_at": "2026-05-09T10:00:00Z"
-}
-```
-
----
-
-## Autenticação
-
-### Login
-
-```typescript
-const { user, token } = await api.login("usuario@email.com", "senha123");
-// Token pode ser armazenado em localStorage/sessionStorage
-localStorage.setItem("token", token);
-```
-
-### Logout
-
-```typescript
-await api.logout();
-```
-
-### Requisições com Token
-
-O cliente API inclui automaticamente o token em todas as requisições:
-
-```typescript
-const res = await fetch("http://localhost:8000/api/students", {
-  credentials: "include",  // Inclui cookies
-  headers: {
-    "Authorization": `Bearer ${token}`,  // Ou use cookies
-  },
-});
-```
-
-### Cadastro e primeiro acesso
-
-O sistema funciona assim:
-
-- **Aluno:** pode se cadastrar normalmente, sem token.
-- **Professor/Administrador:** precisam informar o token de registro.
-- **Primeiro administrador:** deve ser criado pelo terminal.
-
-Fluxo prático:
-
-1. Gere o token de registro no terminal:
-
-```bash
-cd "C:\xampp\htdocs\P.O.L.I\EED\backend"
-php artisan poli:generate-registration-token
-```
-
-2. O token é mostrado no terminal e salvo em `storage/app/poli/registration-token.txt`.
-3. Use esse token na tela de cadastro quando for criar um administrador ou professor.
-4. Para o primeiro acesso administrativo, crie o primeiro admin pelo terminal:
-
-```bash
-php artisan poli:create-first-admin
-```
-
-5. Depois disso, o administrador pode entrar normalmente com login e senha.
-
-Observação: hoje o token é recebido manualmente pelo terminal e pela tela de cadastro; futuramente ele pode ser enviado por e-mail.
-
----
-
-## Testes
-
-### Testar Backend com Postman/Insomnia
-
-1. Importe os endpoints de `backend/API_DOCUMENTATION.md`
-2. Configure a variável de ambiente: `{{api_url}}` = `http://localhost:8000`
-3. Teste cada endpoint CRUD
-
-### Testar Frontend
-
-```bash
-cd "C:\xampp\htdocs\P.O.L.I\EED"
-npm run dev
-
-# Acesse http://localhost:5173
-# Teste os formulários e operações CRUD
-```
-
----
-
-## Endpoints Principais
-
-Ver documentação completa em [backend/API_DOCUMENTATION.md](./backend/API_DOCUMENTATION.md)
-
-| Método | Endpoint | Descrição |
-|--------|----------|-----------|
+| Método | Endpoint | Uso |
+|--------|----------|-----|
+| POST | `/api/register` | Criar conta |
 | POST | `/api/login` | Fazer login |
-| POST | `/api/logout` | Fazer logout |
-| GET | `/api/students` | Listar alunos |
+| POST | `/api/logout` | Encerrar sessão |
+| GET | `/api/user` | Ler perfil autenticado |
+| PATCH | `/api/user` | Atualizar perfil autenticado |
+| POST | `/api/forgot-password` | Iniciar recuperação de senha |
+| POST | `/api/reset-password` | Redefinir senha |
+| GET | `/api/materials` | Listar materiais publicamente |
+| GET | `/api/subjects-public` | Listar disciplinas públicas |
+| GET | `/api/students` | Listar alunos autenticado |
 | POST | `/api/students` | Criar aluno |
-| PUT | `/api/students/{id}` | Atualizar aluno |
-| DELETE | `/api/students/{id}` | Remover aluno |
 | GET | `/api/teachers` | Listar professores |
 | POST | `/api/teachers` | Criar professor |
-| GET | `/api/subjects` | Listar disciplinas |
-| GET | `/api/materials` | Listar materiais |
-| POST | `/api/materials` | Criar material |
+| GET | `/api/subjects` | Listar disciplinas autenticado |
+| POST | `/api/subjects` | Criar disciplina |
 | GET | `/api/classrooms` | Listar turmas |
+| POST | `/api/classrooms` | Criar turma |
 
----
+## Fluxo de uso recomendado
 
-## Deploy
+1. Configure o banco e rode as migrations.
+2. Suba o backend com `php artisan serve`.
+3. Suba o frontend com `npm run dev`.
+4. Faça login ou crie conta conforme a role desejada.
+5. Para professor ou admin, use o token de registro mostrado no terminal do backend.
+6. Após autenticar, o frontend passa a usar o token automaticamente.
 
-### Backend (Laravel)
+## Notas de comportamento
 
-**Opção 1: Heroku**
-```bash
-# Instale o Heroku CLI
-heroku create seu-app-backend
-heroku addons:create heroku-postgresql:hobby-dev
-git push heroku main
-heroku run php artisan migrate
-```
+- Materiais podem ser listados sem login, mas criação e edição dependem de autenticação e role.
+- O endpoint `/api/user` é a fonte confiável para reconstruir o estado do usuário na interface.
+- O frontend assume o backend local em `127.0.0.1:8000` quando `VITE_API_URL` não é definido.
 
-**Opção 2: DigitalOcean App Platform**
-- Conecte seu repo GitHub
-- Configure variáveis de ambiente (DB_*, SANCTUM_STATEFUL_DOMAINS)
-- Deploy automático
+## Solução de problemas
 
-**Opção 3: VPS (Hetzner, Linode, AWS)**
-- SSH para o servidor
-- Instale PHP, Composer, Nginx
-- Clone o repo e rode `php artisan migrate`
-- Configure domínio e SSL
-
-** Utilizando O Script -npm run deploy-**
-- npm run deploy (Configura as alterações feitas no frontend para o backend)
-
-### Frontend (React)
-
-**Opção 1: Vercel**
-```bash
-npm install -g vercel
-vercel
-```
-
-**Opção 2: Netlify**
-```bash
-npm run build
-# Arraste a pasta `dist/` para Netlify
-```
-
-**Opção 3: Servidor estático**
-```bash
-npm run build
-# Copie a pasta `dist/` para seu servidor web (Apache, Nginx)
-```
-
----
-
-## Troubleshooting
-
-### "CORS error: Access denied"
-- Verifique se `SANCTUM_STATEFUL_DOMAINS` está configurado no `.env` do backend
-- Confirme se `VITE_API_URL` está correto no `.env.local` do frontend
-
-### "API returns 401 Unauthorized"
-- Verifique se o token está sendo enviado corretamente
-- Confirme se o usuário está autenticado
-
-### "Database migration fails"
-- Verifique credenciais do banco de dados em `.env`
-- Confirme se o banco de dados existe: `php artisan migrate:fresh`
-
-### "npm: command not found"
-- Use `npm.cmd` no Windows PowerShell
-- Ou use `cmd.exe` em vez de PowerShell
-
----
-
-## Recursos Adicionais
-
-- [Laravel Sanctum Documentation](https://laravel.com/docs/11.x/sanctum)
-- [React Documentation](https://react.dev)
-- [Vite Documentation](https://vitejs.dev)
-- [TailwindCSS Documentation](https://tailwindcss.com)
-- [shadcn/ui Documentation](https://ui.shadcn.com)
-
----
-
-## Licença
-
-Este projeto é fornecido como exemplo educacional. Adapte conforme necessário para seus requisitos.
-
----
-
-**Desenvolvido com (carinho 😊) para educação**
+- Se houver erro de CORS, verifique `SANCTUM_STATEFUL_DOMAINS` e `VITE_API_URL`.
+- Se a API retornar `401`, confirme se o token foi salvo no navegador e enviado na requisição.
+- Se a migration falhar, revise as credenciais do banco em `.env`.
+- No Windows, prefira `npm.cmd` se o comando `npm` não estiver disponível no terminal.
 

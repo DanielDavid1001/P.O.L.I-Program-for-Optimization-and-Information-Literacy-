@@ -5,11 +5,12 @@ import { Upload, FileText, Calendar } from 'lucide-react';
 interface MaterialFormProps {
   onSubmit: (material: any) => Promise<void> | void;
   darkMode: boolean;
+  availableSubjects?: { id: any; name: string }[];
 }
 
 const GRADES = ['1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano', '6º Ano', '7º Ano', '8º Ano', '9º Ano', '1º Médio', '2º Médio', '3º Médio'];
 
-const SUBJECTS = [
+const FALLBACK_SUBJECTS = [
   'Português',
   'Matemática',
   'Física',
@@ -24,7 +25,7 @@ const SUBJECTS = [
   'Ciências'
 ];
 
-export function MaterialForm({ onSubmit, darkMode }: MaterialFormProps) {
+export function MaterialForm({ onSubmit, darkMode, availableSubjects }: MaterialFormProps) {
   const [subjectName, setSubjectName] = useState('');
   const [grade, setGrade] = useState('');
   const [fileName, setFileName] = useState('');
@@ -121,9 +122,19 @@ export function MaterialForm({ onSubmit, darkMode }: MaterialFormProps) {
               }`}
             >
               <option value="">Selecione a matéria</option>
-              {SUBJECTS.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
+              {(() => {
+                const availNames = (availableSubjects && availableSubjects.length) ? availableSubjects.map((s:any) => String(s.name)) : [];
+                const combined = [...FALLBACK_SUBJECTS, ...availNames];
+                const seen = new Set<string>();
+                return combined.filter(n => {
+                  const key = String(n).toLowerCase();
+                  if (seen.has(key)) return false;
+                  seen.add(key);
+                  return true;
+                }).map((s) => (
+                  <option key={s} value={s}>{s}</option>
+                ));
+              })()}
             </select>
           </div>
         </div>

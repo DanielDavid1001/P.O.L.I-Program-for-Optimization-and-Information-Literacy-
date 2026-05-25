@@ -23,6 +23,16 @@ class MaterialController extends Controller
     public function store(Request $request)
     {
         try {
+            $user = $request->user();
+            $roleRaw = strtolower(trim((string) optional($user)->role));
+            $roleMap = ['professor' => 'teacher', 'prof' => 'teacher', 'administrador' => 'admin', 'aluno' => 'student'];
+            $role = $roleMap[$roleRaw] ?? $roleRaw;
+
+            // Allow only teachers and admins to create materials
+            if (! in_array($role, ['admin', 'teacher'], true)) {
+                return response()->json(['message' => 'Você não tem permissão para criar materiais.'], 403);
+            }
+
             $data = $request->all();
             
             // Manual validation for required fields

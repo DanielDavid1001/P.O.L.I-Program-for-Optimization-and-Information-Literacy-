@@ -3,43 +3,34 @@
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use App\Models\User;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 
-function poli_registration_token_path(): string
+/**
+ * Generate a compact registration token using md5 and substr.
+ * Default length is 16 characters; adjust by passing $length.
+ */
+function poli_generate_registration_token(int $length = 16): string
 {
-    return storage_path('app/poli/registration-token.txt');
+    $raw = Str::random(64) . uniqid('', true);
+    $hash = md5($raw);
+
+    // Ensure requested length is within md5 hash bounds
+    $length = max(8, min(32, $length));
+
+    return substr($hash, 0, $length);
 }
 
-function poli_read_registration_token(): ?string
-{
-    $path = poli_registration_token_path();
+Artisan::command('poli:generate-registration-token {--length=16}', function () {
+    $length = (int) $this->option('length');
+    $length = max(8, min(32, $length));
 
-    if (! File::exists($path)) {
-        return null;
-    }
+    $token = poli_generate_registration_token($length);
 
-    $token = trim((string) File::get($path));
-
-    return $token !== '' ? $token : null;
-}
-
-function poli_store_registration_token(string $token): void
-{
-    $path = poli_registration_token_path();
-    File::ensureDirectoryExists(dirname($path));
-    File::put($path, $token . PHP_EOL);
-}
-
-Artisan::command('poli:generate-registration-token', function () {
-    $token = Str::random(64);
-    poli_store_registration_token($token);
-
-    $this->info('Token de cadastro gerado com sucesso:');
+    $this->info("Token de cadastro gerado com sucesso (length={$length}):");
     $this->line($token);
-    $this->line('O token foi salvo em storage/app/poli/registration-token.txt');
-})->purpose('Generate and store the registration token for admins and teachers');
+    $this->line('Esse token é temporário e não é salvo em arquivo.');
+})->purpose('Generate a temporary registration token for admins and teachers');
 
 Artisan::command('poli:create-first-admin {name?} {email?} {--password=} {--force}', function () {
     $existingAdmin = User::query()->where('role', 'admin')->exists();
@@ -49,12 +40,7 @@ Artisan::command('poli:create-first-admin {name?} {email?} {--password=} {--forc
         return 1;
     }
 
-    $token = poli_read_registration_token();
-    if (! $token) {
-        $this->warn('Nenhum token encontrado. Gerando um novo token de cadastro...');
-        $token = Str::random(64);
-        poli_store_registration_token($token);
-    }
+    $token = poli_generate_registration_token(16);
 
     $name = $this->argument('name') ?: $this->ask('Nome do primeiro administrador');
     $email = $this->argument('email') ?: $this->ask('E-mail do primeiro administrador');
@@ -71,9 +57,9 @@ Artisan::command('poli:create-first-admin {name?} {email?} {--password=} {--forc
 
     $this->info('Administrador inicial criado/atualizado com sucesso.');
     $this->line('E-mail: ' . $user->email);
-    $this->line('Token de cadastro ativo: ' . $token);
+    $this->line('Token de cadastro temporário: ' . $token);
     $this->line('Compartilhe esse token apenas com administradores e professores autorizados.');
-})->purpose('Create the first admin user and ensure the registration token exists');
+})->purpose('Create the first admin user and print a temporary registration token');
 
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());

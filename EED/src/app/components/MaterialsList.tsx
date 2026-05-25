@@ -2,17 +2,21 @@ import { useState } from 'react';
 import { Material } from '../App.tsx';
 import { Trash2, BookMarked, Download, Calendar, FileText, Eye } from 'lucide-react';
 import { MaterialDetails } from './MaterialDetails.tsx';
+import formatDateBR from '../../lib/formatDate';
 
 interface MaterialsListProps {
   materials: Material[];
   onRemove: (id: string) => void;
   darkMode: boolean;
+  // role of current user: 'admin' | 'teacher' | 'student'
+  role?: 'admin' | 'teacher' | 'student' | null;
 }
 
-export function MaterialsList({ materials, onRemove, darkMode }: MaterialsListProps) {
+export function MaterialsList({ materials, onRemove, darkMode, role = null }: MaterialsListProps) {
   const [query, setQuery] = useState('');
   const [adaptedOnly, setAdaptedOnly] = useState(false);
   const [viewingMaterial, setViewingMaterial] = useState<Material | null>(null);
+  const [localPermissionMessage, setLocalPermissionMessage] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const ITEMS_PER_PAGE = 6;
 
@@ -58,14 +62,41 @@ export function MaterialsList({ materials, onRemove, darkMode }: MaterialsListPr
     return colors[index % colors.length];
   };
 
-  const handleDownload = (material: Material) => {
-    if (material.fileData) {
+  const handleDownload = async (material: Material) => {
+    try {
+      // Prefer inline base64/fileData, otherwise try fileUrl, otherwise fetch details from API
+      if (material.fileData) {
+        const link = document.createElement('a');
+        link.href = material.fileData;
+        link.download = material.fileName;
+        link.click();
+        return;
+      }
+
+      // if a direct file URL exists, open it in a new tab to let browser handle download
+      const fileUrl = (material as any).fileUrl || (material as any).file_url || (material.fileData ?? '');
+      if (fileUrl && typeof fileUrl === 'string' && fileUrl.startsWith('http')) {
+        window.open(fileUrl, '_blank');
+        return;
+      }
+
+      // fallback: fetch material detail from API to get file_url or fileData
+      const res = await fetch(`/api/materials/${material.id}`);
+      if (!res.ok) throw new Error('Não foi possível obter o arquivo');
+      const data = await res.json();
+      const downloadSrc = data.fileData ?? data.file_data ?? data.file_url ?? null;
+      if (!downloadSrc) throw new Error('Arquivo não encontrado no servidor');
+      if (downloadSrc.startsWith('http')) {
+        window.open(downloadSrc, '_blank');
+        return;
+      }
+
       const link = document.createElement('a');
-      link.href = material.fileData;
-      link.download = material.fileName;
+      link.href = downloadSrc;
+      link.download = material.fileName ?? 'material.pdf';
       link.click();
-    } else {
-      alert('Arquivo não disponível para download');
+    } catch (err: any) {
+      setLocalPermissionMessage(err?.message ?? 'Erro ao baixar o arquivo');
     }
   };
 
@@ -166,17 +197,34 @@ export function MaterialsList({ materials, onRemove, darkMode }: MaterialsListPr
                               >
                                 <Eye size={18} />
                               </button>
-                              <button
-                                onClick={() => {
-                                  if (window.confirm(`Deseja remover "${material.fileName}"?`)) {
-                                    onRemove(material.id);
-                                  }
-                                }}
-                                className="text-red-500 hover:text-red-700 transition-colors"
-                                title="Remover material"
-                              >
-                                <Trash2 size={18} />
-                              </button>
+                              {(role === 'admin' || role === 'teacher') && (
+                                <button
+                                  onClick={async () => {
+                                    // Admins perform delete via confirmation dialog
+                                    if (role === 'admin') {
+                                      const confirmed = typeof (window as any).eedConfirm === 'function'
+                                        ? await (window as any).eedConfirm(`Deseja remover "${material.fileName}"?`)
+                                        : window.confirm(`Deseja remover "${material.fileName}"?`);
+                                      if (confirmed) onRemove(material.id);
+                                      return;
+                                    }
+
+                                    // For teachers, show a permission-style popup
+                                    const msg = 'Você não tem permissão para excluir materiais.';
+                                    if (typeof (window as any).eedPermission === 'function') {
+                                      (window as any).eedPermission(msg);
+                                    } else if (typeof window !== 'undefined') {
+                                      setLocalPermissionMessage(msg);
+                                    } else {
+                                      alert(msg);
+                                    }
+                                  }}
+                                  className="text-red-500 hover:text-red-700 transition-colors"
+                                  title={role === 'admin' ? 'Remover material' : 'Você não tem permissão'}
+                                >
+                                  <Trash2 size={18} />
+                                </button>
+                              )}
                             </div>
 
                             <div className="space-y-2">
@@ -187,7 +235,7 @@ export function MaterialsList({ materials, onRemove, darkMode }: MaterialsListPr
                                 )}
                               <div className={`flex items-center gap-2 text-xs ${darkMode ? 'text-gray-400' : 'text-gray-600'}`}>
                                 <Calendar size={14} />
-                                <span>Upload: {new Date(material.uploadDate).toLocaleDateString('pt-BR')}</span>
+                                <span>Upload: {formatDateBR(material.uploadDate)}</span>
                               </div>
 
                               <button
@@ -262,6 +310,17 @@ export function MaterialsList({ materials, onRemove, darkMode }: MaterialsListPr
           </p>
         </div>
       </div>
+
+      {localPermissionMessage && (
+        <div className="fixed top-20 right-6 z-60 max-w-sm">
+          <div className="rounded-lg border p-4 bg-yellow-50 text-yellow-900 shadow-md">
+            <div className="flex items-start justify-between gap-4">
+              <div className="text-sm">{localPermissionMessage}</div>
+              <button onClick={() => setLocalPermissionMessage(null)} className="text-yellow-800 font-semibold">Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {viewingMaterial && (
         <MaterialDetails

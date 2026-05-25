@@ -2,15 +2,17 @@ import { useState, useEffect } from 'react';
 import { Teacher } from '../App.tsx';
 import { Trash2, Users, Mail, BookOpen, Edit, Eye } from 'lucide-react';
 import { TeacherDetails } from './TeacherDetails.tsx';
+import formatPhoneBR from '../../lib/formatPhone';
 
 interface TeachersListProps {
   teachers: Teacher[];
   onRemove: (id: string) => void;
   onEdit: (teacher: Teacher) => void;
   darkMode: boolean;
+  role?: 'admin' | 'teacher' | 'student' | null;
 }
 
-export function TeachersList({ teachers, onRemove, onEdit, darkMode }: TeachersListProps) {
+export function TeachersList({ teachers, onRemove, onEdit, darkMode, role = null }: TeachersListProps) {
   const [viewingTeacher, setViewingTeacher] = useState<Teacher | null>(null);
   const [query, setQuery] = useState('');
   const [rawQuery, setRawQuery] = useState('');
@@ -119,9 +121,20 @@ export function TeachersList({ teachers, onRemove, onEdit, darkMode }: TeachersL
                     <Edit size={20} />
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm(`Deseja remover ${teacher.name}?`)) {
-                        onRemove(teacher.id);
+                    onClick={async () => {
+                      if (role === 'admin') {
+                        const confirm = typeof (window as any).eedConfirm === 'function'
+                          ? await (window as any).eedConfirm(`Deseja remover ${teacher.name}?`)
+                          : window.confirm(`Deseja remover ${teacher.name}?`);
+                        if (confirm) onRemove(teacher.id);
+                        return;
+                      }
+
+                      const msg = 'Você não tem permissão para excluir professores.';
+                      if (typeof (window as any).eedPermission === 'function') {
+                        (window as any).eedPermission(msg);
+                      } else {
+                        alert(msg);
                       }
                     }}
                     className="text-red-500 hover:text-red-700 transition-colors"
@@ -143,7 +156,7 @@ export function TeachersList({ teachers, onRemove, onEdit, darkMode }: TeachersL
                 {teacher.phone && (
                   <div className={`flex items-center gap-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     <span className="font-medium">Telefone:</span>
-                    <span>{teacher.phone}</span>
+                    <span>{formatPhoneBR(teacher.phone)}</span>
                   </div>
                 )}
                   </div>

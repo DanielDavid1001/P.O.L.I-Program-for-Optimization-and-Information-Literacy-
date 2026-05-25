@@ -33,11 +33,21 @@ export function Dashboard({
   darkMode,
 }: DashboardProps) {
 
+  const normalizeGradeLabel = (grade: string) => {
+    const normalized = grade.trim().replace(/\s+/g, " ");
+    if (/^1\s*[º°o]?(?:\s*Ano)?(?:\s*do)?(?:\s*Ensino)?\s*M[eé]dio$/i.test(normalized)) return "1º Médio";
+    if (/^2\s*[º°o]?(?:\s*Ano)?(?:\s*do)?(?:\s*Ensino)?\s*M[eé]dio$/i.test(normalized)) return "2º Médio";
+    if (/^3\s*[º°o]?(?:\s*Ano)?(?:\s*do)?(?:\s*Ensino)?\s*M[eé]dio$/i.test(normalized)) return "3º Médio";
+    return normalized;
+  };
+
   const materialsByGrade: { [key: string]: number } = {};
   materials.forEach((material) => {
     if (material.grade) {
-      materialsByGrade[material.grade] =
-        (materialsByGrade[material.grade] || 0) + 1;
+      const normalizedGrade = normalizeGradeLabel(material.grade);
+      if (normalizedGrade === "1º Ano do Ensino Médio") return;
+      materialsByGrade[normalizedGrade] =
+        (materialsByGrade[normalizedGrade] || 0) + 1;
     }
   });
 
@@ -49,7 +59,7 @@ export function Dashboard({
     value,
   }));
 
-  // Order grades in a natural school sequence and limit displayed items to 6.
+  // Order grades in a natural school sequence.
   const gradeOrder = [
     "Pré-Escola",
     "1º Ano",
@@ -66,22 +76,26 @@ export function Dashboard({
     "3º Médio",
   ];
 
-  const sortedMaterialGradeData = [...materialGradeData].sort((a, b) => {
-    const ia = gradeOrder.indexOf(a.name);
-    const ib = gradeOrder.indexOf(b.name);
-    if (ia === -1 && ib === -1) return a.name.localeCompare(b.name);
+  const sortGrades = (a: string, b: string) => {
+    const ia = gradeOrder.indexOf(a);
+    const ib = gradeOrder.indexOf(b);
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
     if (ia === -1) return 1;
     if (ib === -1) return -1;
     return ia - ib;
-  });
+  };
 
-  const MAX_MATERIAL_ITEMS = 6;
-  const displayMaterialGradeData = sortedMaterialGradeData.slice(0, MAX_MATERIAL_ITEMS);
+  const sortedMaterialGradeData = [...materialGradeData].sort((a, b) =>
+    sortGrades(a.name, b.name),
+  );
+
+  const displayMaterialGradeData = sortedMaterialGradeData;
 
   const gradeData = students.reduce(
     (acc: { [key: string]: number }, student) => {
       if (student.grade) {
-        acc[student.grade] = (acc[student.grade] || 0) + 1;
+        const normalizedGrade = normalizeGradeLabel(student.grade);
+        acc[normalizedGrade] = (acc[normalizedGrade] || 0) + 1;
       }
       return acc;
     },
@@ -94,7 +108,7 @@ export function Dashboard({
       name,
       total,
     }),
-  );
+  ).sort((a, b) => sortGrades(a.name, b.name));
 
   const COLORS = [
     "#FF8C42",
@@ -134,7 +148,9 @@ export function Dashboard({
   const adaptedByGrade: { [key: string]: number } = {};
   materials.forEach((material) => {
     if (material.grade && material.isAdapted) {
-      adaptedByGrade[material.grade] = (adaptedByGrade[material.grade] || 0) + 1;
+      const normalizedGrade = normalizeGradeLabel(material.grade);
+      if (normalizedGrade === "1º Ano do Ensino Médio") return;
+      adaptedByGrade[normalizedGrade] = (adaptedByGrade[normalizedGrade] || 0) + 1;
     }
   });
 
@@ -142,7 +158,7 @@ export function Dashboard({
     id: `adapted-materials-${name.replace(/\s+/g, "-").toLowerCase()}-${index}`,
     name,
     adapted: value,
-  }));
+  })).sort((a, b) => sortGrades(a.name, b.name));
 
   const hasStudentGradeData = combinedPcdAdaptedData.length > 0;
   const hasMaterialGradeData = materialGradeData.length > 0;
@@ -244,13 +260,21 @@ export function Dashboard({
           <h3
             className={`text-xl font-bold mb-4 ${darkMode ? "text-white" : "text-gray-800"}`}
           >
-            Quantidade de Materias Adaptadas por Série
+            Quantidade de Materias Adaptados por Série
           </h3>
           <ResponsiveContainer width="100%" height={300} key="responsive-bar-chart-pcd">
             {hasStudentGradeData ? (
               <BarChart data={combinedPcdAdaptedData} key="bar-chart-pcd">
                 <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
-                <XAxis dataKey="name" stroke="#7AB800" />
+                <XAxis
+                  dataKey="name"
+                  stroke="#7AB800"
+                  interval={0}
+                  angle={-35}
+                  textAnchor="end"
+                  height={60}
+                  tick={{ fontSize: 11 }}
+                />
                 <YAxis stroke="#F79646" />
                 <Tooltip />
                 <Legend />
@@ -304,7 +328,6 @@ export function Dashboard({
                   ))}
                 </Pie>
                 <Tooltip />
-                <Legend />
               </PieChart>
             ) : (
               <div className={`h-full flex items-center justify-center text-sm ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
@@ -363,7 +386,15 @@ export function Dashboard({
             {hasMaterialsBarData ? (
               <BarChart data={gradeChartData} key="bar-chart-students-by-grade">
                 <CartesianGrid strokeDasharray="3 3" stroke="#ccc" />
-                <XAxis dataKey="name" stroke="#2b75ff" />
+                <XAxis
+                  dataKey="name"
+                  stroke="#2b75ff"
+                  interval={0}
+                  angle={-35}
+                  textAnchor="end"
+                  height={60}
+                  tick={{ fontSize: 11 }}
+                />
                 <YAxis stroke="#F79646" />
                 <Tooltip />
                 <Legend />

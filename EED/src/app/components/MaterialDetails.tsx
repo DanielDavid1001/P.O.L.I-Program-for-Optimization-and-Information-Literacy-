@@ -1,5 +1,6 @@
 import { Material } from '../App.tsx';
 import { X, BookMarked, Calendar, FileText, Download, BadgeCheck } from 'lucide-react';
+import formatDateBR from '../../lib/formatDate';
 import { DetailPager, DetailCardItem } from './DetailPager.tsx';
 
 interface MaterialDetailsProps {
@@ -37,7 +38,7 @@ export function MaterialDetails({ material, onClose, onDownload, darkMode }: Mat
       key: 'material-upload',
       title: 'Data de upload',
       icon: <Calendar size={20} className="text-blue-600" />,
-      content: <p className="text-lg font-bold">{material.uploadDate ? new Date(material.uploadDate).toLocaleDateString('pt-BR') : '—'}</p>,
+      content: <p className="text-lg font-bold">{material.uploadDate ? formatDateBR(material.uploadDate) : '—'}</p>,
       fullWidth: true,
     },
     {

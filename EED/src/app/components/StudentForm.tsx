@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Student, Material } from '../App.tsx';
+import formatPhoneBR from '../../lib/formatPhone';
+import { User, Mail, Phone, Calendar, BookOpen, ClipboardList } from 'lucide-react';
 
 interface StudentFormProps {
   onSubmit: (student: Student) => Promise<void> | void;
@@ -18,19 +20,6 @@ export function StudentForm({ onSubmit, materials, darkMode, editingStudent, onC
   const [pcdNotes, setPcdNotes] = useState('');
   const [phone, setPhone] = useState('');
   const [phoneError, setPhoneError] = useState<string | null>(null);
-  // format phone while typing: (DD) 91234-5678 or (DD) 1234-5678
-  const formatPhone = (value: string) => {
-    let digits = value.replace(/\D/g, '');
-    // limit to 11 digits
-    digits = digits.slice(0, 11);
-    if (!digits) return '';
-    if (digits.length <= 2) return `(${digits}`;
-    if (digits.length <= 6) return `(${digits.slice(0,2)}) ${digits.slice(2)}`;
-    const first = digits.slice(0,2);
-    const middle = digits.slice(2, digits.length - 4);
-    const last = digits.slice(-4);
-    return `(${first}) ${middle}-${last}`;
-  };
   const [birthDate, setBirthDate] = useState('');
   const [grade, setGrade] = useState('');
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
@@ -41,7 +30,7 @@ export function StudentForm({ onSubmit, materials, darkMode, editingStudent, onC
       setIsPcd(editingStudent.isPcd ?? false);
       setPcdNotes(editingStudent.pcdNotes || '');
       setEmail(editingStudent.email || '');
-      setPhone(editingStudent.phone || '');
+      setPhone(formatPhoneBR(editingStudent.phone || ''));
       setBirthDate(editingStudent.birth_date || '');
       setGrade(editingStudent.grade || '');
       setSelectedSubjects(editingStudent.subjects || []);
@@ -55,10 +44,10 @@ export function StudentForm({ onSubmit, materials, darkMode, editingStudent, onC
       return;
     }
 
-    // phone must be exactly 11 digits
+    // phone must be 10 or 11 digits
     const digits = phone.replace(/\D/g, '');
-    if (!digits || digits.length !== 11) {
-      setPhoneError('Telefone obrigatório com 11 dígitos. Ex: (11) 91234-5678');
+    if (!digits || (digits.length !== 10 && digits.length !== 11)) {
+      setPhoneError('Telefone obrigatório com 10 dígitos. Ex: (11) 1234-5678');
       return;
     }
 
@@ -108,141 +97,161 @@ export function StudentForm({ onSubmit, materials, darkMode, editingStudent, onC
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
-      <h2 className={`text-2xl font-bold mb-6 ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+    <div className="mx-auto w-full max-w-4xl px-4 py-2 sm:px-0">
+      <h2 className={`mb-8 text-3xl font-black tracking-tight ${darkMode ? 'text-white' : 'text-slate-900'}`}>
         {editingStudent ? 'Editar Aluno' : 'Cadastrar Novo Aluno'}
       </h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-            Nome do Aluno
-          </label>
-          <input
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent ${
-              darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-            }`}
-            placeholder="Nome completo"
-          />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="flex items-center gap-2">
-            <input id="pcd-checkbox" type="checkbox" checked={isPcd} onChange={(e) => setIsPcd(e.target.checked)} className="h-4 w-4" />
-            <label htmlFor="pcd-checkbox" className={`${darkMode ? 'text-gray-300' : 'text-gray-700'} text-sm`}>Aluno PCD</label>
+      <form onSubmit={handleSubmit} className="space-y-8">
+        <section className={`rounded-2xl border p-6 shadow-sm ${darkMode ? 'border-emerald-800 bg-slate-900' : 'border-emerald-200 bg-emerald-50/60'}`}>
+          <div className="flex items-center gap-3">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${darkMode ? 'bg-emerald-700 text-white' : 'bg-emerald-600 text-white'}`}>
+              <User size={20} />
+            </div>
+            <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Informações Pessoais</h3>
           </div>
 
+          <div className="mt-6 space-y-5">
+            <div>
+              <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                Nome Completo <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={`w-full rounded-2xl border px-5 py-3 text-lg outline-none transition focus:border-emerald-500 ${
+                  darkMode ? 'border-slate-700 bg-slate-800 text-white placeholder:text-slate-400' : 'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400'
+                }`}
+                placeholder="Digite o nome completo do aluno"
+              />
+            </div>
 
-        </div>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className={`mb-2 flex items-center gap-2 text-sm font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                  <Mail size={16} /> Email <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className={`w-full rounded-2xl border px-5 py-3 text-lg outline-none transition focus:border-emerald-500 ${
+                    darkMode ? 'border-slate-700 bg-slate-800 text-white placeholder:text-slate-400' : 'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400'
+                  }`}
+                  placeholder="aluno@escola.com"
+                />
+              </div>
 
-        {isPcd && (
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              Observações / Necessidades do Aluno (visíveis no perfil)
+              <div>
+                <label className={`mb-2 flex items-center gap-2 text-sm font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                  <Phone size={16} /> Telefone <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => {
+                    const formatted = formatPhoneBR(e.target.value);
+                    setPhone(formatted);
+                    if (phoneError) {
+                      const digits = formatted.replace(/\D/g, '');
+                      if (digits.length >= 10 && digits.length <= 11) setPhoneError(null);
+                    }
+                  }}
+                  className={`w-full rounded-2xl border px-5 py-3 text-lg outline-none transition focus:border-emerald-500 ${
+                    darkMode ? 'border-slate-700 bg-slate-800 text-white placeholder:text-slate-400' : 'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400'
+                  }`}
+                  placeholder="(11) 1234-5678"
+                />
+                {phoneError && <p className="mt-1 text-sm text-red-500">{phoneError}</p>}
+              </div>
+
+              <div>
+                <label className={`mb-2 flex items-center gap-2 text-sm font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                  <Calendar size={16} /> Data de Nascimento <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="date"
+                  value={birthDate}
+                  onChange={(e) => setBirthDate(e.target.value)}
+                  className={`w-full rounded-2xl border px-5 py-3 text-lg outline-none transition focus:border-emerald-500 ${
+                    darkMode ? 'border-slate-700 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'
+                  }`}
+                />
+              </div>
+
+              <div>
+                <label className={`mb-2 flex items-center gap-2 text-sm font-medium ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                  <BookOpen size={16} /> Série <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={grade}
+                  onChange={(e) => setGrade(e.target.value)}
+                  className={`w-full rounded-2xl border px-5 py-3 text-lg outline-none transition focus:border-emerald-500 ${
+                    darkMode ? 'border-slate-700 bg-slate-800 text-white' : 'border-slate-300 bg-white text-slate-900'
+                  }`}
+                >
+                  <option value="">Selecione a série</option>
+                  {GRADES.map((item) => (
+                    <option key={item} value={item}>{item}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className={`rounded-2xl border px-4 py-3 text-sm ${darkMode ? 'border-slate-700 bg-slate-800 text-slate-200' : 'border-emerald-100 bg-white/80 text-slate-700'}`}>
+              <strong>Idade:</strong> é calculada automaticamente pela data de nascimento.
+              {birthDate ? ` Atual: ${Math.floor((Date.now() - new Date(birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25))} anos.` : ''}
+            </div>
+          </div>
+        </section>
+
+        <section className={`rounded-2xl border p-6 shadow-sm ${darkMode ? 'border-emerald-800 bg-slate-900' : 'border-emerald-200 bg-white'}`}>
+          <div className="flex items-center gap-3">
+            <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${darkMode ? 'bg-emerald-700 text-white' : 'bg-emerald-600 text-white'}`}>
+              <ClipboardList size={20} />
+            </div>
+            <h3 className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-slate-900'}`}>Condições e Observações</h3>
+          </div>
+
+          <div className="mt-6 space-y-4">
+            <label className={`flex items-center gap-3 rounded-2xl border px-4 py-4 ${darkMode ? 'border-slate-700 bg-slate-800' : 'border-slate-200 bg-emerald-50/60'}`}>
+              <input id="pcd-checkbox" type="checkbox" checked={isPcd} onChange={(e) => setIsPcd(e.target.checked)} className="h-4 w-4 rounded border-slate-400 text-emerald-600 focus:ring-emerald-500" />
+              <span className={`text-sm font-semibold ${darkMode ? 'text-slate-200' : 'text-slate-800'}`}>Aluno PCD</span>
             </label>
-            <textarea
-              value={pcdNotes}
-              onChange={(e) => setPcdNotes(e.target.value)}
-              rows={4}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent ${
-                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-              }`}
-              placeholder="Descreva as necessidades, adaptações e observações..."
-            />
-          </div>
-        )}
-        <div>
-          <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-            Email
-          </label>
-          <input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent ${
-              darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-            }`}
-            placeholder="Email do aluno/responsável"
-          />
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              Telefone
-            </label>
-            <input
-              type="tel"
-              value={phone}
-              onChange={(e) => {
-                const formatted = formatPhone(e.target.value);
-                setPhone(formatted);
-                if (phoneError) {
-                  const digits = formatted.replace(/\D/g, '');
-                  if (digits.length === 11) setPhoneError(null);
-                }
-              }}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent ${
-                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-              }`}
-              placeholder="Telefone do aluno/responsável"
-            />
-            {phoneError && <p className="text-sm text-red-500 mt-1">{phoneError}</p>}
+            {isPcd && (
+              <div>
+                <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-slate-200' : 'text-slate-700'}`}>
+                  Observações / Necessidades do Aluno <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  value={pcdNotes}
+                  onChange={(e) => setPcdNotes(e.target.value)}
+                  rows={4}
+                  className={`w-full rounded-2xl border px-5 py-4 outline-none transition focus:border-emerald-500 ${
+                    darkMode ? 'border-slate-700 bg-slate-800 text-white placeholder:text-slate-400' : 'border-slate-300 bg-white text-slate-900 placeholder:text-slate-400'
+                  }`}
+                  placeholder="Descreva as necessidades, adaptações e observações..."
+                />
+              </div>
+            )}
           </div>
-
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              Data de Nascimento
-            </label>
-            <input
-              type="date"
-              value={birthDate}
-              onChange={(e) => setBirthDate(e.target.value)}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent ${
-                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-              }`}
-            />
-          </div>
-
-          <div>
-            <label className={`block text-sm font-medium mb-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-              Série
-            </label>
-            <select
-              value={grade}
-              onChange={(e) => setGrade(e.target.value)}
-              className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-green-600 focus:border-transparent ${
-                darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'
-              }`}
-            >
-              <option value="">Selecione a série</option>
-              {GRADES.map((item) => (
-                <option key={item} value={item}>{item}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className={`rounded-lg border px-4 py-3 text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-gray-200' : 'bg-gray-50 border-gray-200 text-gray-700'}`}>
-          Idade calculada automaticamente pela data de nascimento.
-          {birthDate ? ` Idade atual: ${Math.floor((Date.now() - new Date(birthDate).getTime()) / (1000 * 60 * 60 * 24 * 365.25))} anos.` : ''}
-        </div>
+        </section>
 
         <div className="flex gap-4">
           {editingStudent && onCancel && (
             <button
               type="button"
               onClick={onCancel}
-              className="flex-1 bg-gray-500 text-white py-3 rounded-lg hover:bg-gray-600 transition-colors font-medium text-lg"
+              className="flex-1 rounded-2xl bg-slate-500 py-3.5 text-lg font-semibold text-white transition-colors hover:bg-slate-600"
             >
               Cancelar
             </button>
           )}
           <button
             type="submit"
-            className="flex-1 bg-green-600 text-white py-3 rounded-lg hover:bg-green-700 transition-colors font-medium text-lg"
+            className="flex-1 rounded-2xl bg-emerald-600 py-3.5 text-lg font-semibold text-white transition-colors hover:bg-emerald-700"
           >
             {editingStudent ? 'Salvar Alterações' : 'Cadastrar Aluno'}
           </button>

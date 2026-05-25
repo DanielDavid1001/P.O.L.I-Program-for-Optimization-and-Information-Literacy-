@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../App.tsx';
+import formatDateBR from '../../lib/formatDate';
+import formatPhoneBR from '../../lib/formatPhone';
 import { Trash2, GraduationCap, Edit, Eye } from 'lucide-react';
 import { StudentDetails } from './StudentDetails.tsx';
 
@@ -8,9 +10,10 @@ interface StudentsListProps {
   onRemove: (id: string) => void;
   onEdit: (student: Student) => void;
   darkMode: boolean;
+  role?: 'admin' | 'teacher' | 'student' | null;
 }
 
-export function StudentsList({ students, onRemove, onEdit, darkMode }: StudentsListProps) {
+export function StudentsList({ students, onRemove, onEdit, darkMode, role = null }: StudentsListProps) {
   const [viewingStudent, setViewingStudent] = useState<Student | null>(null);
   const [query, setQuery] = useState('');
   const [rawQuery, setRawQuery] = useState('');
@@ -103,9 +106,21 @@ export function StudentsList({ students, onRemove, onEdit, darkMode }: StudentsL
                     <Edit size={20} />
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm(`Deseja remover ${student.name}?`)) {
-                        onRemove(student.id);
+                    onClick={async () => {
+                      if (role === 'admin') {
+                        const confirmed = typeof (window as any).eedConfirm === 'function'
+                          ? await (window as any).eedConfirm(`Deseja remover ${student.name}?`)
+                          : window.confirm(`Deseja remover ${student.name}?`);
+                        if (confirmed) onRemove(student.id);
+                        return;
+                      }
+
+                      // Non-admins (teachers/students) see permission popup
+                      const msg = 'Você não tem permissão para excluir alunos.';
+                      if (typeof (window as any).eedPermission === 'function') {
+                        (window as any).eedPermission(msg);
+                      } else {
+                        alert(msg);
                       }
                     }}
                     className="text-red-500 hover:text-red-700 transition-colors"
@@ -125,14 +140,14 @@ export function StudentsList({ students, onRemove, onEdit, darkMode }: StudentsL
                 {student.phone && (
                   <div className={`flex items-center gap-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     <span className="font-medium">Telefone:</span>
-                    <span>{student.phone}</span>
+                    <span>{formatPhoneBR(student.phone)}</span>
                   </div>
                 )}
 
                 {student.birth_date && (
                   <div className={`flex items-center gap-2 text-sm ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
                     <span className="font-medium">Nascimento:</span>
-                    <span>{student.birth_date}</span>
+                    <span>{formatDateBR(student.birth_date)}</span>
                   </div>
                 )}
 

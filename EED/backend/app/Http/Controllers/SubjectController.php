@@ -7,6 +7,14 @@ use Illuminate\Http\Request;
 
 class SubjectController extends Controller
 {
+    public function publicIndex()
+    {
+        return Subject::query()
+            ->select(['id', 'name', 'code'])
+            ->orderBy('name')
+            ->get();
+    }
+
     public function index()
     {
         return Subject::with('teacher')->paginate(20);

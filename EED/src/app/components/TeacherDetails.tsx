@@ -1,6 +1,7 @@
 import { Teacher } from '../App.tsx';
 import { X, Users, BookOpen, Mail, Award } from 'lucide-react';
 import { DetailPager, DetailCardItem } from './DetailPager.tsx';
+import formatPhoneBR from '../../lib/formatPhone';
 
 interface TeacherDetailsProps {
   teacher: Teacher;
@@ -52,7 +53,7 @@ export function TeacherDetails({ teacher, onClose, darkMode }: TeacherDetailsPro
     {
       key: 'teacher-phone',
       title: 'Telefone',
-      content: <p className="text-lg">{(teacher as any).phone || '—'}</p>,
+      content: <p className="text-lg">{formatPhoneBR((teacher as any).phone || '') || '—'}</p>,
     },
   ];
 
