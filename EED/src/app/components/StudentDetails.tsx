@@ -42,35 +42,7 @@ export function StudentDetails({ student, onClose, darkMode }: StudentDetailsPro
       title: 'Aluno PCD',
       content: <p className="text-lg font-bold">{student.isPcd ? 'Sim' : 'Não'}</p>,
     },
-    {
-      key: 'student-subjects',
-      title: `Matérias Cursadas (${student.subjects?.length ?? 0})`,
-      icon: <BookOpen size={20} className="text-purple-600" />,
-      content: (
-        <div>
-          <div className="mb-3">
-            <input
-              type="text"
-              placeholder="Buscar matérias..."
-              value={subjectsQuery}
-              onChange={(e) => setSubjectsQuery(e.target.value)}
-              className={`px-3 py-2 rounded-lg border w-full ${darkMode ? 'bg-gray-700 border-gray-600 text-white' : 'bg-white border-gray-300 text-gray-900'}`}
-            />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {((student.subjects ?? []).filter(s => s.toLowerCase().includes(subjectsQuery.toLowerCase())).length ?? 0) > 0 ?
-              (student.subjects ?? []).filter(s => s.toLowerCase().includes(subjectsQuery.toLowerCase())).map((subject, index) => (
-                <span key={index} className="px-3 py-1 bg-green-600 text-white rounded-full text-sm font-medium">
-                  {subject}
-                </span>
-              )) : (
-                <p className="text-sm">Sem matérias cadastradas.</p>
-              )}
-          </div>
-        </div>
-      ),
-      fullWidth: true,
-    },
+    // 'Matérias Cursadas' removed per request
     {
       key: 'student-notes',
       title: 'Observações / Necessidades',

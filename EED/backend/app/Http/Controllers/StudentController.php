@@ -19,7 +19,12 @@ class StudentController extends Controller
 
     public function show($id)
     {
-        return Student::with('classroom')->findOrFail($id);
+        $student = Student::with('classroom')->findOrFail($id);
+        // Hide the `subjects` attribute from the student details response
+        // because the frontend should no longer display "Matérias cursadas".
+        $student->makeHidden(['subjects']);
+
+        return $student;
     }
 
     public function store(Request $request)
@@ -75,12 +80,8 @@ class StudentController extends Controller
                 $student->user_id = $user->id;
                 $student->save();
 
-                $resetToken = Password::broker()->createToken($user);
-                $student->setAttribute('reset_password_token', $resetToken);
-                $student->setAttribute(
-                    'reset_password_url',
-                    rtrim(env('FRONTEND_URL', 'http://localhost:5173'), '/') . '/reset-password?token=' . urlencode($resetToken) . '&email=' . urlencode($user->email)
-                );
+                // Do not expose password reset tokens in API responses when creating students.
+                // Tokens are intentionally not returned here to avoid showing them in alerts.
             }
 
             return $student;

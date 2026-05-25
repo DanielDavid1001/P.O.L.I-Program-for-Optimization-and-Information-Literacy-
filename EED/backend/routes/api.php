@@ -70,6 +70,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
             'name' => $user->name,
             'email' => $user->email,
             'role' => $user->role,
+            // expose created_at so frontend can show "Membro desde"
+            'created_at' => $user->created_at ? $user->created_at->toIso8601String() : null,
             'phone' => $user->phone ?? ($profile->phone ?? null),
             'profile' => $profile,
         ];

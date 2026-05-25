@@ -6,9 +6,10 @@ interface MaterialFormProps {
   onSubmit: (material: any) => Promise<void> | void;
   darkMode: boolean;
   availableSubjects?: { id: any; name: string }[];
+  currentRole?: string | null;
 }
 
-const GRADES = ['1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano', '6º Ano', '7º Ano', '8º Ano', '9º Ano', '1º Médio', '2º Médio', '3º Médio'];
+const BASE_GRADES = ['1º Ano', '2º Ano', '3º Ano', '4º Ano', '5º Ano', '6º Ano', '7º Ano', '8º Ano', '9º Ano', '1º Médio', '2º Médio', '3º Médio'];
 
 const FALLBACK_SUBJECTS = [
   'Português',
@@ -25,7 +26,7 @@ const FALLBACK_SUBJECTS = [
   'Ciências'
 ];
 
-export function MaterialForm({ onSubmit, darkMode, availableSubjects }: MaterialFormProps) {
+export function MaterialForm({ onSubmit, darkMode, availableSubjects, currentRole }: MaterialFormProps) {
   const [subjectName, setSubjectName] = useState('');
   const [grade, setGrade] = useState('');
   const [fileName, setFileName] = useState('');
@@ -104,9 +105,12 @@ export function MaterialForm({ onSubmit, darkMode, availableSubjects }: Material
               }`}
             >
               <option value="">Selecione a série</option>
-              {GRADES.map(g => (
-                <option key={g} value={g}>{g}</option>
-              ))}
+              {(() => {
+                const normalized = (currentRole ?? '').toString().toLowerCase();
+                const includePreEscolar = normalized === 'admin' || normalized === 'administrator' || normalized === 'administrador' || normalized === 'teacher' || normalized === 'professor' || normalized === 'prof';
+                const grades = includePreEscolar ? ['Pré-Escolar', ...BASE_GRADES] : BASE_GRADES;
+                return grades.map((g) => <option key={g} value={g}>{g}</option>);
+              })()}
             </select>
           </div>
 

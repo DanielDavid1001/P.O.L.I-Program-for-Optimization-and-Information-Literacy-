@@ -2445,7 +2445,7 @@ export default function App() {
             </div>
           )}
 
-          {activeTab === 'add-material' && canAddMaterials && <MaterialForm onSubmit={addMaterial} darkMode={darkMode} availableSubjects={subjects} />}
+          {activeTab === 'add-material' && canAddMaterials && <MaterialForm onSubmit={addMaterial} darkMode={darkMode} availableSubjects={subjects} currentRole={currentRole} />}
           {activeTab === 'add-student' && canAddStudents && (
             <StudentForm
               onSubmit={editingStudent ? updateStudent : addStudent}
